@@ -11,6 +11,7 @@ const String AUTHORIZED_PHONE = "+6282199799982";
 #define starterRelayPin 4    // Relay starter (seperti tombol starter)
 #define vibrationPin 6       // Sensor getar
 #define alarmRelayPin 12     // Relay alarm / buzzer / motor blokir
+#define extraRelayPin 7      // Relay tambahan (COM & NC)
 
 // Komunikasi Serial
 #define rxPin 10
@@ -26,6 +27,7 @@ String sms_status, sender_number, received_date, msg;
 boolean ignition_status = false;
 boolean reply_status = true;
 boolean anti_theft = false;
+boolean extraRelayStatus = true;  // Status awal ON
 
 void setup() {
   Serial.begin(115200);
@@ -36,10 +38,12 @@ void setup() {
   pinMode(starterRelayPin, OUTPUT);
   pinMode(alarmRelayPin, OUTPUT);
   pinMode(vibrationPin, INPUT);
+  pinMode(extraRelayPin, OUTPUT);
 
   digitalWrite(relayPin, LOW);
   digitalWrite(starterRelayPin, LOW);
   digitalWrite(alarmRelayPin, LOW);
+  digitalWrite(extraRelayPin, HIGH);  // Relay tambahan aktif saat awal sistem
 
   initializeSIM800L();
 }
@@ -122,9 +126,11 @@ void doAction() {
   if (msg == "bike on") {
     digitalWrite(relayPin, HIGH);
     sendSms("Motor dinyalakan");
+
   } else if (msg == "bike off") {
     digitalWrite(relayPin, LOW);
     sendSms("Motor dimatikan");
+
   } else if (msg == "bike start") {
     if (ignition_status) {
       startBike();  // Hanya jika motor sudah ON
@@ -134,12 +140,25 @@ void doAction() {
 
   } else if (msg == "get location") {
     sendSmsGPS();
+
   } else if (msg == "anti theft on") {
     anti_theft = true;
     sendSms("Anti-pencurian diaktifkan");
+
   } else if (msg == "anti theft off") {
     anti_theft = false;
     sendSms("Anti-pencurian dinonaktifkan");
+
+  } else if (msg == "on") {
+    digitalWrite(extraRelayPin, HIGH);
+    extraRelayStatus = true;
+    sendSms("Relay tambahan dihidupkan.");
+
+  } else if (msg == "off") {
+    digitalWrite(extraRelayPin, LOW);
+    extraRelayStatus = false;
+    sendSms("Relay tambahan dimatikan.");
+
   } else {
     sendSms("Perintah tidak dikenali.");
   }
